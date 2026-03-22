@@ -1,4 +1,4 @@
-import {addTodo,toggleTodo,deleteTodo,editTodo} from "../store/slices/todoSlice";
+import {fetchTodo, createTodo, updateTodo, deleteTodo } from "../store/slices/todoSlice";
 import { useAppDispatch, useAppSelector } from "../hooks/hooks";
 import { useState, useEffect } from "react";
 import "./Todo.css";
@@ -12,14 +12,18 @@ const Todo = () => {
   const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
   
   useEffect(() => {
-    localStorage.setItem("todos", JSON.stringify(todos));
-  }, [todos]);
+    dispatch(fetchTodo());
+  }, [dispatch]);
 
   const handleAdd = () => {
     if (!text.trim()) return;
-    dispatch(addTodo({ text }));
+    dispatch(createTodo({
+      text,
+      completed: false
+    }));
     setText("");
   };
+
   const filteredTodos = todos.filter((todo) => {
     if (filter === "active") return !todo.completed;  
     if (filter === "completed") return todo.completed;
@@ -49,15 +53,15 @@ const Todo = () => {
         </div>
         <ul className="todo-list">
           {filteredTodos.map((todo) => (
-            <li key={todo.id} className="todo-item">
+            <li key={todo._id} className="todo-item">
               <div className="todo-left">
                 <input
                   type="checkbox"
                   checked={todo.completed}
-                  onChange={() => dispatch(toggleTodo({ id: todo.id }))}
+                  onChange={() => dispatch(updateTodo({...todo, completed: !todo.completed}))}
                 />
 
-                {editingId === todo.id ? (
+                {editingId === todo._id ? (
                   <>
                     <input
                       type="text"
@@ -78,11 +82,11 @@ const Todo = () => {
               </div>
 
               <div className="todo-actions">
-                {editingId === todo.id ? (
+                {editingId === todo._id ? (
                   <>
                   <button className="todo-btn" onClick={() => {
                     if (editText.trim()){
-                      dispatch(editTodo({ id: todo.id, text: editText }));
+                      dispatch(updateTodo({ ...todo, text: editText }));
                     }
                     
                     setEditingId(null);
@@ -93,10 +97,11 @@ const Todo = () => {
                 ) : (
                   <>
                   <button className="todo-btn" onClick={() => {
-                    setEditingId(todo.id);
+                    setEditingId(todo._id);
                     setEditText(todo.text);
                   }}>Edit</button> 
-                  <button className="todo-btn" onClick={() => dispatch(deleteTodo({ id: todo.id }))}>X</button>
+
+                  <button className="todo-btn" onClick={() => dispatch(deleteTodo(todo._id))}>X</button>
 
                   </>
                 )
